@@ -1,0 +1,83 @@
+#0 building with "desktop-linux" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.new-jit
+#1 transferring dockerfile: 3.24kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/rayproject/ray:2.50.1-py39
+#2 DONE 0.8s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [ 1/16] FROM docker.io/rayproject/ray:2.50.1-py39@sha256:b06166ed8d61757b8d8634f2c3fe2522dce8dd6b4f3f299b2901f9ce46cf5f93
+#4 resolve docker.io/rayproject/ray:2.50.1-py39@sha256:b06166ed8d61757b8d8634f2c3fe2522dce8dd6b4f3f299b2901f9ce46cf5f93 0.0s done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 44.89kB done
+#5 DONE 0.0s
+
+#6 [ 2/16] WORKDIR /tmp/ray-patches
+#6 CACHED
+
+#7 [ 3/16] COPY python/ray/train/_internal/jit_checkpoint.py ./jit_checkpoint.py
+#7 CACHED
+
+#8 [ 4/16] COPY python/ray/train/_internal/jit_checkpoint_config.py ./jit_checkpoint_config.py
+#8 DONE 0.0s
+
+#9 [ 5/16] COPY python/ray/train/_internal/backend_executor.py ./backend_executor.py
+#9 DONE 0.0s
+
+#10 [ 6/16] COPY python/ray/train/_internal/session.py ./session.py
+#10 DONE 0.0s
+
+#11 [ 7/16] COPY python/ray/train/data_parallel_trainer.py ./data_parallel_trainer.py
+#11 DONE 0.0s
+
+#12 [ 8/16] COPY python/ray/train/trainer.py ./trainer.py
+#12 DONE 0.0s
+
+#13 [ 9/16] COPY python/ray/train/v2/api/config.py ./config.py
+#13 DONE 0.0s
+
+#14 [10/16] COPY python/ray/train/constants.py ./constants.py
+#14 DONE 0.0s
+
+#15 [11/16] RUN cp jit_checkpoint.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ &&     cp jit_checkpoint_config.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ &&     cp backend_executor.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ &&     cp session.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ &&     cp data_parallel_trainer.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/ &&     cp trainer.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/ &&     cp config.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/v2/api/ &&     cp constants.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/
+#15 DONE 0.1s
+
+#16 [12/16] RUN python -c "from ray.train._internal.jit_checkpoint import JITCheckpointHandler; print('✓ JIT Checkpoint Handler available')" &&     python -c "from ray.train._internal.jit_checkpoint_config import JITCheckpointConfig; print('✓ JIT Checkpoint Config available')"
+#16 1.296 ✓ JIT Checkpoint Handler available
+#16 1.908 ✓ JIT Checkpoint Config available
+#16 DONE 2.1s
+
+#17 [13/16] RUN python -c "from ray.train.constants import RAY_TRAIN_JIT_CHECKPOINT_ENABLED, RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT; print('✓ Environment variable constants available')" &&     python -c "from ray._private.ray_constants import env_bool, env_float; from ray.train.constants import RAY_TRAIN_JIT_CHECKPOINT_ENABLED, RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT; print('✓ Helper functions available')"
+#17 0.629 ✓ Environment variable constants available
+#17 1.246 ✓ Helper functions available
+#17 DONE 1.3s
+
+#18 [14/16] RUN export RAY_TRAIN_JIT_CHECKPOINT_ENABLED=1 &&     export RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT=5.0 &&     python -c "import os; os.environ['RAY_TRAIN_JIT_CHECKPOINT_ENABLED']='1'; os.environ['RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT']='5.0'; from ray._private.ray_constants import env_bool, env_float; from ray.train.constants import RAY_TRAIN_JIT_CHECKPOINT_ENABLED, RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT; enabled = env_bool(RAY_TRAIN_JIT_CHECKPOINT_ENABLED, False); kill_wait = env_float(RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT, 3.0); assert enabled == True, f'Expected enabled=True, got {enabled}'; assert kill_wait == 5.0, f'Expected kill_wait=5.0, got {kill_wait}'; print(f'✓ Environment variable reading works: enabled={enabled}, kill_wait={kill_wait}')"
+#18 0.605 ✓ Environment variable reading works: enabled=True, kill_wait=5.0
+#18 DONE 0.7s
+
+#19 [15/16] RUN rm -rf /tmp/ray-patches
+#19 DONE 0.1s
+
+#20 [16/16] WORKDIR /home/ray
+#20 DONE 0.0s
+
+#21 exporting to image
+#21 exporting layers
+#21 exporting layers 0.2s done
+#21 exporting manifest sha256:fab3de7dcc1a3d8d5c028b61366063d6d17fdbb462d6cf3c17e6b74e212bdbb2 done
+#21 exporting config sha256:621800bca78b4f3e462e1ee87548f41f8c18a9890ddc6578690fa877d452519d done
+#21 exporting attestation manifest sha256:455da21b478a9c0ccdbfda8ea3de59eaf9a553c403dcb27b3aa33aefee0c36fa done
+#21 exporting manifest list sha256:575d800ca31de9bb977176343744543fe10cc19bfc0b89ee3c82740ffe015942 done
+#21 naming to quay.io/kryanbeane/ray:new-jit done
+#21 unpacking to quay.io/kryanbeane/ray:new-jit 0.1s done
+#21 DONE 0.3s
+
+View build details: docker-desktop://dashboard/build/desktop-linux/desktop-linux/qm7bsopwcg3artkuokjj00aj7
