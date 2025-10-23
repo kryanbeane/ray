@@ -1,0 +1,48 @@
+# Updated Dockerfile for JIT Checkpoint with Environment Variable Support
+FROM rayproject/ray:2.50.1-py39
+
+USER root
+
+# Create temp directory for our files
+WORKDIR /tmp/ray-patches
+
+# Copy all modified Python files for environment variable support
+COPY python/ray/train/_internal/jit_checkpoint.py ./jit_checkpoint.py
+COPY python/ray/train/_internal/jit_checkpoint_config.py ./jit_checkpoint_config.py
+COPY python/ray/train/_internal/backend_executor.py ./backend_executor.py
+COPY python/ray/train/_internal/session.py ./session.py
+COPY python/ray/train/data_parallel_trainer.py ./data_parallel_trainer.py
+COPY python/ray/train/trainer.py ./trainer.py
+COPY python/ray/train/v2/api/config.py ./config.py
+COPY python/ray/train/constants.py ./constants.py
+
+# Install the patched files
+RUN cp jit_checkpoint.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ && \
+    cp jit_checkpoint_config.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ && \
+    cp backend_executor.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ && \
+    cp session.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/_internal/ && \
+    cp data_parallel_trainer.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/ && \
+    cp trainer.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/ && \
+    cp config.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/v2/api/ && \
+    cp constants.py /home/ray/anaconda3/lib/python3.9/site-packages/ray/train/
+
+# Verify JIT checkpoint is available
+RUN python -c "from ray.train._internal.jit_checkpoint import JITCheckpointHandler; print('✓ JIT Checkpoint Handler available')" && \
+    python -c "from ray.train._internal.jit_checkpoint_config import JITCheckpointConfig; print('✓ JIT Checkpoint Config available')"
+
+# Verify environment variable constants are available
+RUN python -c "from ray.train.constants import RAY_TRAIN_JIT_CHECKPOINT_ENABLED, RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT; print('✓ Environment variable constants available')" && \
+    python -c "from ray._private.ray_constants import env_bool, env_float; from ray.train.constants import RAY_TRAIN_JIT_CHECKPOINT_ENABLED, RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT; print('✓ Helper functions available')"
+
+# Verify environment variable reading works
+RUN export RAY_TRAIN_JIT_CHECKPOINT_ENABLED=1 && \
+    export RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT=5.0 && \
+    python -c "import os; os.environ['RAY_TRAIN_JIT_CHECKPOINT_ENABLED']='1'; os.environ['RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT']='5.0'; from ray._private.ray_constants import env_bool, env_float; from ray.train.constants import RAY_TRAIN_JIT_CHECKPOINT_ENABLED, RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT; enabled = env_bool(RAY_TRAIN_JIT_CHECKPOINT_ENABLED, False); kill_wait = env_float(RAY_TRAIN_JIT_CHECKPOINT_KILL_WAIT, 3.0); assert enabled == True, f'Expected enabled=True, got {enabled}'; assert kill_wait == 5.0, f'Expected kill_wait=5.0, got {kill_wait}'; print(f'✓ Environment variable reading works: enabled={enabled}, kill_wait={kill_wait}')"
+
+# Clean up
+RUN rm -rf /tmp/ray-patches
+
+USER ray
+WORKDIR /home/ray
+
+CMD ["ray", "start", "--head", "--block"]
